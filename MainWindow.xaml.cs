@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Packaging;
 using System.Printing;
 using System.Windows;
 using System.Windows.Documents;
@@ -39,10 +40,16 @@ namespace Bug6842
                     },
                 }
             };
-            
-            // create a temp XPS document
-            var tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
-            var tempDocument = new XpsDocument(tempFilePath, FileAccess.ReadWrite);
+
+            // create a temporary package
+            var tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Package package = Package.Open(tempFilePath, FileMode.Create, FileAccess.ReadWrite);
+
+            // create a temporary XPS document using that package
+            string tempFilePath2 = Path.GetTempFileName();
+            PackageStore.AddPackage(new Uri(tempFilePath2), package);
+            var tempDocument = new XpsDocument(package, CompressionOption.Normal, tempFilePath2);
+
             var writer = XpsDocument.CreateXpsDocumentWriter(tempDocument);
 
             // Write the FlowDocument to the XPS document

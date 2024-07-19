@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.IO.Packaging;
 using System.Printing;
@@ -55,6 +55,11 @@ namespace Bug6842
             // Write the FlowDocument to the XPS document
             writer.Write(((IDocumentPaginatorSource) flowDocument).DocumentPaginator);
 
+			// **new** close the temporary document
+			PackageStore.RemovePackage(new Uri(tempFilePath2));
+			tempDocument.Close();
+			package.Close();
+
             // Get a default print ticket from the default printer
             LocalPrintServer localPrintServer = new LocalPrintServer();
             PrintQueue printQueue = LocalPrintServer.GetDefaultPrintQueue();
@@ -63,8 +68,11 @@ namespace Bug6842
             // Create an XpsDocumentWriter object for the print queue.
             XpsDocumentWriter printWriter = PrintQueue.CreateXpsDocumentWriter(printQueue);
 
-            // ** this throws the exception **
-            printWriter.Write(tempDocument.GetFixedDocumentSequence(), printTicket);
+			// **new** reopen the document as read-only
+			tempDocument = new XpsDocument(tempFilePath, FileAccess.Read);
+
+			// **new** this now succeeds
+			printWriter.Write(tempDocument.GetFixedDocumentSequence(), printTicket);
 
             // avoiding the temporary document prints successfully
             // xpsDocumentWriter.Write(((IDocumentPaginatorSource) flowDocument).DocumentPaginator, printTicket);
